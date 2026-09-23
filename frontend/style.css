@@ -8,8 +8,10 @@
   --text-muted: #6b6b64;
   --text-faint: #9a9a92;
 
-  --accent: #f2b705;      /* restrained CAT-yellow */
+  --accent: #f2b705;      /* CAT-yellow - identical to landing.css */
   --accent-ink: #4a3c00;  /* text on top of accent chips */
+  --accent-glow: rgba(242, 183, 5, 0.28);        /* primary-button shadow, as on the landing CTA */
+  --accent-glow-strong: rgba(242, 183, 5, 0.38);
   --dark: #1c1c1a;
 
   --good: #2f7a45;
@@ -37,11 +39,11 @@ body {
   line-height: 1.45;
 }
 
-h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -0.015em; }
 
 /* ---------- Top bar ---------- */
 .topbar {
-  background: var(--dark);
+  background: linear-gradient(180deg, #121210 0%, var(--dark) 100%);
   color: #f4f4f0;
   padding: 16px 28px 18px;
   border-bottom: 3px solid var(--accent);
@@ -54,12 +56,30 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
   margin-bottom: 14px;
 }
 
+/* Same wordmark as landing.css: white "CAT", yellow "Mate". */
 .wordmark {
   font-size: 20px;
   font-weight: 750;
   letter-spacing: -0.02em;
+  color: #fff;
 }
 .wordmark-accent { color: var(--accent); }
+
+/* Same label as landing.css .hero-eyebrow, set beside the logo after a
+   thin divider (negative margin pulls it inside the row's 24px gap). */
+.brand-tagline {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  line-height: 1;
+  white-space: nowrap;
+  margin-left: -10px;
+  padding-left: 14px;
+  border-left: 1px solid #47473f;
+}
+@media (max-width: 700px) { .brand-tagline { display: none; } }
 
 .operator-picker {
   display: flex;
@@ -113,13 +133,14 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 }
 .chip-label {
   font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   color: #b5b5ac;
 }
 .chip-value {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 800;
   color: #f4f4f0;
 }
 .chip.good .chip-value { color: #7bd39a; }
@@ -171,10 +192,10 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 }
 .page-section[hidden] { display: none; }
 .page-head { margin-bottom: 20px; }
-.page-head h1 { font-size: 22px; display: flex; align-items: center; gap: 10px; }
+.page-head h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; display: flex; align-items: center; gap: 10px; }
 .page-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .page-sub { margin: 6px 0 0; font-size: 13px; color: var(--text-muted); max-width: 820px; }
-.section-subhead { font-size: 16px; margin: 28px 0 12px; }
+.section-subhead { font-size: 16px; font-weight: 750; letter-spacing: -0.02em; margin: 28px 0 12px; }
 
 .panel-card {
   background: var(--surface);
@@ -427,15 +448,10 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .training-reason { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
 
 .training-toggle {
-  border: 1px solid var(--border);
-  background: var(--surface-alt);
-  border-radius: 6px;
+  border: 1px solid transparent; /* keeps the same box size as the bordered .completed state */
   padding: 6px 10px;
   font-size: 11px;
-  font-weight: 650;
-  cursor: pointer;
   white-space: nowrap;
-  color: var(--text-muted);
 }
 .training-toggle.completed {
   background: var(--good-bg);
@@ -479,17 +495,9 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 
 .incident-form-actions { display: flex; align-items: center; gap: 10px; }
 .incident-form-actions button {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border: none;
-  border-radius: 6px;
   padding: 7px 14px;
   font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
 }
-.incident-form-actions button:hover { filter: brightness(0.96); }
-.incident-form-actions button:disabled { opacity: 0.6; cursor: default; }
 .incident-form-msg { font-size: 11.5px; }
 .incident-form-msg.ok { color: var(--good); }
 .incident-form-msg.err { color: var(--bad); }
@@ -731,11 +739,7 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .booking-days { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 .booking-times { display: flex; flex-wrap: wrap; gap: 8px; }
 .booking-footer { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-.booking-footer button {
-  background: var(--accent); color: var(--accent-ink); border: none;
-  border-radius: 6px; padding: 8px 16px; font-size: 12.5px; font-weight: 700; cursor: pointer;
-}
-.booking-footer button:disabled { opacity: 0.5; cursor: default; }
+.booking-footer button { padding: 8px 16px; font-size: 12.5px; }
 .booking-msg.ok { color: var(--good); font-size: 12px; }
 .booking-list-head { font-size: 12px; text-transform: uppercase; color: var(--text-faint); margin: 4px 0 6px; }
 .booking-row { font-size: 12.5px; padding: 5px 0; border-bottom: 1px solid var(--border); }
@@ -743,14 +747,10 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 /* ---------- Hazard simulation ---------- */
 .sim-card #sim-canvas { width: 100%; max-width: 720px; height: auto; border: 1px solid var(--border); border-radius: 8px; display: block; background: #dce8f2; cursor: crosshair; }
 .sim-controls { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
-.sim-controls button {
-  background: var(--accent); color: var(--accent-ink); border: none;
-  border-radius: 6px; padding: 8px 16px; font-size: 12.5px; font-weight: 700; cursor: pointer;
-}
+.sim-controls button { padding: 8px 16px; font-size: 12.5px; }
 .sim-status { font-size: 12.5px; color: var(--text-muted); }
 .sim-key { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 10px; font-size: 11.5px; color: var(--text-muted); }
 .sim-key-group b { color: var(--text); }
-#sim-start:disabled { opacity: 0.6; cursor: default; }
 
 .sim-results {
   margin-top: 14px;
@@ -867,8 +867,9 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 #chatbot-form input:focus { outline: none; }
 #chatbot-form button {
   background: var(--accent); color: var(--accent-ink); border: none;
-  padding: 0 16px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+  padding: 0 16px; font-weight: 750; font-size: 12.5px; cursor: pointer;
 }
+#chatbot-form button:hover { background: #f5c42e; }
 
 /* ---------- Footer ---------- */
 .footer {
@@ -902,19 +903,7 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .handoff-note-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .handoff-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--text-muted); }
 .handoff-meta b { color: var(--text); }
-.handoff-copy {
-  background: var(--dark);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 7px 14px;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 650;
-  cursor: pointer;
-}
-.handoff-copy:hover:not(:disabled) { background: #33332f; }
-.handoff-copy:disabled { opacity: 0.4; cursor: default; }
+.handoff-copy { padding: 7px 14px; font: inherit; font-size: 12.5px; }
 .handoff-summary { font-size: 16px; line-height: 1.6; margin: 0; max-width: 820px; }
 
 .handoff-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
@@ -955,3 +944,49 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
   .handoff-event { grid-template-columns: 56px 1fr; }
   .handoff-event-reason { grid-column: 1 / -1; }
 }
+
+/* ---------- Primary action buttons ----------
+   One style for every primary action, matching the landing page's
+   "Enter Dashboard" CTA: CAT-yellow, 8px radius, heavy label, yellow glow,
+   1px lift on hover. Each button keeps its own padding/size above. */
+.incident-form-actions button,
+.booking-footer button,
+.sim-controls button,
+.handoff-copy,
+.training-toggle:not(.completed) {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 4px 14px var(--accent-glow);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.incident-form-actions button,
+.booking-footer button,
+.sim-controls button,
+.handoff-copy { border: none; }
+.incident-form-actions button:hover:not(:disabled),
+.booking-footer button:hover:not(:disabled),
+.sim-controls button:hover:not(:disabled),
+.handoff-copy:hover:not(:disabled),
+.training-toggle:not(.completed):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--accent-glow-strong);
+}
+.incident-form-actions button:active,
+.booking-footer button:active,
+.sim-controls button:active,
+.handoff-copy:active,
+.training-toggle:active { transform: translateY(0); }
+.incident-form-actions button:disabled,
+.booking-footer button:disabled,
+.sim-controls button:disabled,
+.handoff-copy:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  transform: none;
+  cursor: default;
+}
+.training-toggle.completed { border-radius: 8px; font-weight: 750; cursor: pointer; font-family: inherit; }
