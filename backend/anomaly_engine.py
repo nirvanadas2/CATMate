@@ -14,6 +14,20 @@ Z_THRESHOLD = 2.0
 PROXIMITY_HAZARD_THRESHOLD_M = 2.0
 
 
+def safety_alert_reason(row) -> str:
+    """WHY text for one safety-flagged reading - shared by /alerts and the
+    shift handoff so the same reading always reads the same way."""
+    reasons = []
+    if row["seatbelt_status"] == "Unfastened":
+        reasons.append("seatbelt unfastened")
+    if 0 <= row["proximity_distance_m"] < PROXIMITY_HAZARD_THRESHOLD_M:
+        reasons.append(
+            f"object detected {row['proximity_distance_m']:.1f} m away "
+            f"(threshold {PROXIMITY_HAZARD_THRESHOLD_M:.0f} m)"
+        )
+    return (" and ".join(reasons) or "safety threshold exceeded").capitalize() + "."
+
+
 def _with_delta(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Some fields (load_cycles, fuel_used_L, engine_hours) are cumulative
     counters; the per-reading *increment* is the behaviorally meaningful
@@ -150,6 +164,7 @@ def compute_security_anomalies(df: pd.DataFrame) -> list[dict]:
             anomalies.append({
                 **base,
                 "anomaly_type": "implausible_sensor_value",
+                "sensor": "proximity",
                 "reason": (
                     f"Proximity sensor reported {row['proximity_distance_m']:.1f} m — a physically "
                     "impossible negative distance, indicating a spoofed or malfunctioning sensor."
@@ -160,6 +175,7 @@ def compute_security_anomalies(df: pd.DataFrame) -> list[dict]:
             anomalies.append({
                 **base,
                 "anomaly_type": "implausible_sensor_value",
+                "sensor": "engine_hours",
                 "reason": (
                     f"Engine hours dropped from {row['engine_hours_prev']:.1f} to "
                     f"{row['engine_hours']:.1f} — a cumulative counter cannot decrease, indicating "

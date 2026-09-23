@@ -8,14 +8,15 @@ from flask_cors import CORS
 
 import incidents as incidents_module
 from anomaly_engine import (
-    PROXIMITY_HAZARD_THRESHOLD_M,
     _with_delta,
     compute_behavior_anomalies,
     compute_integrity_summary,
     compute_security_anomalies,
+    safety_alert_reason,
 )
 from copilot import answer_question
 from data_loader import DF, LATEST_DATE
+from handoff import compute_shift_handoff
 from ml_model import FEATURES, predict_duration, train_duration_model
 from training import recommend_training
 from trust_score import compute_trust_scores
@@ -63,16 +64,6 @@ def get_alerts():
 
     alerts = []
     for _, row in flagged.iterrows():
-        reasons = []
-        if row["seatbelt_status"] == "Unfastened":
-            reasons.append("seatbelt unfastened")
-        if 0 <= row["proximity_distance_m"] < PROXIMITY_HAZARD_THRESHOLD_M:
-            reasons.append(
-                f"object detected {row['proximity_distance_m']:.1f} m away "
-                f"(threshold {PROXIMITY_HAZARD_THRESHOLD_M:.0f} m)"
-            )
-        reason = (" and ".join(reasons) or "safety threshold exceeded").capitalize() + "."
-
         alerts.append({
             "timestamp": row["timestamp"].isoformat(),
             "operator_id": row["operator_id"],
@@ -80,7 +71,7 @@ def get_alerts():
             "seatbelt_status": row["seatbelt_status"],
             "proximity_distance_m": round(float(row["proximity_distance_m"]), 1),
             "login_location": row["login_location"],
-            "reason": reason,
+            "reason": safety_alert_reason(row),
         })
 
     return jsonify(alerts)
@@ -245,6 +236,16 @@ def get_integrity_summary():
     if not operator_id:
         return jsonify({"error": "operator_id query param is required"}), 400
     return jsonify(compute_integrity_summary(DF, operator_id, LATEST_DATE))
+
+
+@app.route("/shift-handoff")
+def get_shift_handoff():
+    operator_id = request.args.get("operator_id")
+    if not operator_id:
+        return jsonify({"error": "operator_id query param is required"}), 400
+    if operator_id not in TRUST_SCORES:
+        return jsonify({"error": f"unknown operator_id '{operator_id}'"}), 404
+    return jsonify(compute_shift_handoff(DF, operator_id, BEHAVIOR_ANOMALIES, SECURITY_ANOMALIES))
 
 
 @app.route("/copilot", methods=["GET", "POST"])

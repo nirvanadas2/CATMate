@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CATMate — Smart Operator Assistant</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231c1c1a%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-family=%27Arial%27 font-weight=%27bold%27 font-size=%2716%27 text-anchor=%27middle%27 fill=%27%23f2b705%27%3ECM%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="landing.css">
+</head>
+<body>
+
+<section class="hero">
+  <div id="ripple-mount"></div>
+  <div class="hero-scrim"></div>
+
+  <nav class="hero-nav">
+    <div class="wordmark">CAT<span class="wordmark-accent">Mate</span></div>
+  </nav>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Smart Operator Assistant</div>
+    <h1 class="hero-title">CAT<span class="accent">Mate</span></h1>
+    <p class="hero-tagline">
+      Safety, behavior, machine integrity, and training in one dashboard —
+      built on a single explainable anomaly engine, so every alert tells you
+      why, not just that something's wrong.
+    </p>
+    <a class="hero-cta" href="index.html">
+      Enter Dashboard
+      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+
+  <div class="hero-hint">Move your cursor over the image</div>
+</section>
+
+<section class="features">
+  <div class="features-inner">
+    <div class="feature">
+      <h3><span class="dot"></span>Readiness Score</h3>
+      <p>One rolled-up number per operator — safety compliance, behavior consistency, and data integrity, fully explained.</p>
+    </div>
+    <div class="feature">
+      <h3><span class="dot"></span>Behavior Detection</h3>
+      <p>Per-operator baselines catch drift automatically — idling, proximity, and load-cycle deviations flagged in real time.</p>
+    </div>
+    <div class="feature">
+      <h3><span class="dot"></span>Machine &amp; Data Integrity</h3>
+      <p>The same anomaly engine covers spoofed sensors and credential mismatches — cybersecurity as part of trusting the machine.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="landing-footer">
+  CATMate — data-driven operator assistant demo. Backend at <code>http://127.0.0.1:5000</code>
+</footer>
+
+<script type="module">
+  import { createRippleDistortion } from "./js/ripple-distortion.js";
+
+  const mount = document.getElementById("ripple-mount");
+
+  try {
+    createRippleDistortion(mount, {
+      src: "assets/hero-excavator.jpg",
+      trigger: "hover",
+      grayscale: true,
+      tint: "#f2b705",
+      tintAmount: 0.12,
+      quality: "medium",
+    });
+  } catch (err) {
+    // WebGL unavailable or failed to init - fall back to a plain static hero image.
+    console.warn("Ripple effect unavailable, falling back to static hero image:", err);
+    mount.style.backgroundImage = "url('assets/hero-excavator.jpg')";
+  }
+</script>
+</body>
+</html>

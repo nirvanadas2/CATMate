@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CATMate — Operator View</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231c1c1a%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-family=%27Arial%27 font-weight=%27bold%27 font-size=%2716%27 text-anchor=%27middle%27 fill=%27%23f2b705%27%3ECM%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css?v=20260923f">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="wordmark">CAT<span class="wordmark-accent">Mate</span></div>
+
+    <div class="operator-picker">
+      <label for="operator-select">Operator</label>
+      <select id="operator-select">
+        <option value="OP1001">OP1001</option>
+        <option value="OP1002">OP1002</option>
+        <option value="OP1003">OP1003</option>
+        <option value="OP1004">OP1004</option>
+      </select>
+    </div>
+
+    <div class="conn-status" id="conn-status">
+      <span class="dot" id="conn-dot"></span>
+      <span id="conn-text">Connecting…</span>
+    </div>
+  </div>
+
+  <div class="shift-health" id="shift-health">
+    <div class="chip" data-chip="safety"><span class="chip-label">Safety</span><span class="chip-value">—</span></div>
+    <div class="chip" data-chip="behavior"><span class="chip-label">Behavior</span><span class="chip-value">—</span></div>
+    <div class="chip" data-chip="security"><span class="chip-label">Integrity</span><span class="chip-value">—</span></div>
+    <div class="chip" data-chip="training"><span class="chip-label">Training</span><span class="chip-value">—</span></div>
+  </div>
+  <p class="shift-summary" id="shift-summary">Loading shift summary…</p>
+</header>
+
+<nav class="section-tabs" id="section-tabs">
+  <button class="tab active" data-section="tasks">Daily Tasks</button>
+  <button class="tab" data-section="safety">Safety &amp; Map</button>
+  <button class="tab" data-section="training">Training Hub</button>
+  <button class="tab" data-section="behavior">Behavior Detection</button>
+  <button class="tab" data-section="tasktime">Task Time</button>
+  <button class="tab" data-section="integrity">Data Integrity</button>
+  <button class="tab" data-section="readiness">Readiness Score</button>
+  <button class="tab" data-section="handoff">Shift Handoff</button>
+</nav>
+
+<main id="main-content">
+
+  <!-- ============ 1. DAILY TASK DASHBOARD (Kanban) ============ -->
+  <section id="section-tasks" class="page-section">
+    <div class="page-head">
+      <h1>Daily Task Dashboard</h1>
+      <p class="page-sub">Drag a task card between columns as work progresses. Predicted durations come from the trained task-time model.</p>
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-label">
+        <span>Today's progress</span>
+        <span id="task-progress-text">—</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="task-progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <div id="tasks-error"></div>
+    <div class="kanban-board" id="kanban-board">
+      <div class="kanban-col" data-status="todo">
+        <div class="kanban-col-head"><h3>To Do</h3><span class="kanban-count" id="count-todo">0</span></div>
+        <div class="kanban-drop" id="drop-todo" data-status="todo"></div>
+      </div>
+      <div class="kanban-col" data-status="in-progress">
+        <div class="kanban-col-head"><h3>In Progress</h3><span class="kanban-count" id="count-in-progress">0</span></div>
+        <div class="kanban-drop" id="drop-in-progress" data-status="in-progress"></div>
+      </div>
+      <div class="kanban-col" data-status="completed">
+        <div class="kanban-col-head"><h3>Completed</h3><span class="kanban-count" id="count-completed">0</span></div>
+        <div class="kanban-drop" id="drop-completed" data-status="completed"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. SAFETY + ATTACK MAP ============ -->
+  <section id="section-safety" class="page-section" hidden>
+    <div class="page-head">
+      <h1>Safety &amp; Site Threat Map</h1>
+      <p class="page-sub">Seatbelt compliance, proximity hazards, and where they're happening on site.</p>
+    </div>
+
+    <div class="safety-top-grid">
+      <div class="panel-card" id="safety-banner-card">
+        <h2>Current Safety Status</h2>
+        <div id="safety-banner-wrap"><p class="hint">Loading…</p></div>
+      </div>
+
+      <div class="panel-card map-card">
+        <div class="map-header">
+          <h2>Site Threat Map</h2>
+          <div class="map-legend">
+            <span><i class="legend-dot legend-red"></i>Security</span>
+            <span><i class="legend-dot legend-orange"></i>Safety</span>
+            <span><i class="legend-dot legend-green"></i>Normal</span>
+          </div>
+        </div>
+        <div class="map-body-grid">
+          <svg id="threat-map" viewBox="0 0 588 380" role="img" aria-label="Site threat map"></svg>
+          <div class="login-origin-card">
+            <h3>Login Origin</h3>
+            <p class="login-origin-sub">This reading's access point vs. the jobsite.</p>
+            <svg id="login-origin-map" viewBox="0 0 220 150" role="img" aria-label="Login origin map"></svg>
+            <div class="login-origin-status" id="login-origin-status"></div>
+          </div>
+        </div>
+        <div class="map-detail" id="map-detail">Click a marker on the map to see WHY / WHAT / WHAT NEXT.</div>
+      </div>
+    </div>
+
+    <h2 class="section-subhead">Incident Log</h2>
+    <div class="panel-card">
+      <form id="incident-form" class="incident-form">
+        <div class="incident-form-row">
+          <label>Operator<input type="text" id="incident-operator" readonly></label>
+          <label>Machine<select id="incident-machine"></select></label>
+        </div>
+        <label>Description<textarea id="incident-description" rows="2" placeholder="What happened?" required></textarea></label>
+        <div class="incident-form-actions">
+          <button type="submit" id="incident-submit">+ Log Incident</button>
+          <span class="incident-form-msg" id="incident-form-msg"></span>
+        </div>
+      </form>
+      <div id="incident-list"><p class="hint">Loading…</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 3. TRAINING HUB ============ -->
+  <section id="section-training" class="page-section" hidden>
+    <div class="page-head">
+      <h1>Operator Training Hub</h1>
+      <p class="page-sub">Recommended courses, real e-learning videos, instructor booking, and a hands-on hazard-spotting simulation.</p>
+    </div>
+
+    <h2 class="section-subhead">Recommended For You</h2>
+    <div id="training-recs"><p class="hint">Loading…</p></div>
+
+    <h2 class="section-subhead">E-Learning Videos</h2>
+    <div class="video-grid" id="video-grid"></div>
+
+    <h2 class="section-subhead">Book an Instructor Session</h2>
+    <div class="panel-card" id="booking-card">
+      <div class="booking-grid">
+        <div class="booking-instructors" id="booking-instructors"></div>
+        <div class="booking-slots">
+          <div class="booking-days" id="booking-days"></div>
+          <div class="booking-times" id="booking-times"></div>
+        </div>
+      </div>
+      <div class="booking-footer">
+        <button id="booking-confirm" disabled>Confirm Booking</button>
+        <span class="booking-msg" id="booking-msg"></span>
+      </div>
+      <div id="booking-list"></div>
+    </div>
+
+    <h2 class="section-subhead">Hazard-Spotting Simulation</h2>
+    <div class="panel-card sim-card">
+      <p class="page-sub" style="margin:0 0 10px;">Press Start, wait for the countdown, then click every real hazard near the machine before time runs out. Clicking a benign object costs you a point.</p>
+      <div class="sim-key">
+        <span class="sim-key-group"><b>Hazards:</b> worker too close · overhead line · unguarded edge · loose debris</span>
+        <span class="sim-key-group"><b>Decoys:</b> cone · toolbox · parked vehicle · barrel</span>
+      </div>
+      <canvas id="sim-canvas" width="720" height="380"></canvas>
+      <div class="sim-controls">
+        <button id="sim-start">Start Simulation</button>
+        <div class="sim-status" id="sim-status">Ready when you are.</div>
+      </div>
+      <div class="sim-results" id="sim-results" hidden></div>
+    </div>
+  </section>
+
+  <!-- ============ 4. UNUSUAL BEHAVIOR DETECTION ============ -->
+  <section id="section-behavior" class="page-section" hidden>
+    <div class="page-head">
+      <h1>Unusual Behavior Detection</h1>
+      <p class="page-sub">Per-operator baselines vs. real readings — four views of the same underlying z-score engine.</p>
+    </div>
+
+    <div class="behavior-viz-grid">
+      <div class="panel-card"><h2>10-Day Trend — Idling Time</h2><div class="chart-wrap-lg"><canvas id="behavior-line-chart"></canvas></div></div>
+      <div class="panel-card"><h2>Deviation Heatmap</h2><div id="behavior-heatmap"></div></div>
+      <div class="panel-card"><h2>Metric Radar vs. Baseline</h2><div class="chart-wrap-lg"><canvas id="behavior-radar-chart"></canvas></div></div>
+      <div class="panel-card"><h2>Current Deviation Multiplier</h2><div class="chart-wrap-lg gauge-wrap"><canvas id="behavior-gauge-chart"></canvas><div class="gauge-label" id="gauge-label">—</div></div></div>
+    </div>
+
+    <h2 class="section-subhead">Flagged Deviations</h2>
+    <div id="behavior-anomaly-list"><p class="hint">Loading…</p></div>
+  </section>
+
+  <!-- ============ 5. TASK TIME ESTIMATION ============ -->
+  <section id="section-tasktime" class="page-section" hidden>
+    <div class="page-head">
+      <h1>Task Time Estimation</h1>
+      <p class="page-sub">A simple, explainable linear regression — predicted vs. actual on recent tasks, and what drove each prediction.</p>
+    </div>
+
+    <div class="tasktime-grid">
+      <div class="panel-card"><h2>Predicted vs. Actual (recent tasks)</h2><div class="chart-wrap-lg"><canvas id="tasktime-chart"></canvas></div></div>
+      <div class="panel-card"><h2>Contributing Factors</h2><div id="feature-importance"><p class="hint">Loading…</p></div></div>
+    </div>
+    <div class="panel-card" id="model-metrics-note"></div>
+  </section>
+
+  <!-- ============ 6. MACHINE & DATA INTEGRITY ============ -->
+  <section id="section-integrity" class="page-section" hidden>
+    <div class="page-head">
+      <div class="page-head-row">
+        <div>
+          <h1><svg class="icon-shield" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l7 3v6c0 5-3.4 8.6-7 10-3.6-1.4-7-5-7-10V5l7-3z"/></svg> Machine &amp; Data Integrity</h1>
+          <p class="page-sub">Can we trust what this machine is telling us? Login identity, sensor signature, and physical plausibility checks — the same events also plotted on the Site Threat Map.</p>
+        </div>
+        <span class="integrity-badge" id="integrity-badge">—</span>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="integrity-summary-head">
+        <h2>Integrity Checks — This Shift</h2>
+        <span class="integrity-run-counter" id="integrity-run-counter">—</span>
+      </div>
+      <div id="integrity-checks-grid"><p class="hint">Loading…</p></div>
+      <div id="integrity-origin-flag"></div>
+    </div>
+
+    <h2 class="section-subhead">Flagged Events</h2>
+    <div id="integrity-list-full"><p class="hint">Loading…</p></div>
+  </section>
+
+  <!-- ============ 7. OPERATOR READINESS SCORE ============ -->
+  <section id="section-readiness" class="page-section" hidden>
+    <div class="page-head">
+      <h1>Operator Readiness Score</h1>
+      <p class="page-sub">One rolled-up number: safety compliance, behavior consistency, data integrity, and training completion.</p>
+    </div>
+
+    <div class="readiness-hero-grid">
+      <div class="panel-card readiness-ring-card">
+        <svg id="readiness-ring" viewBox="0 0 200 200" class="ring-svg">
+          <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
+          <circle class="ring-fg" id="ring-fg" cx="100" cy="100" r="86"></circle>
+        </svg>
+        <div class="ring-center">
+          <span class="ring-score" id="readiness-score-big">—</span>
+          <span class="ring-of100">/ 100</span>
+        </div>
+      </div>
+      <div class="panel-card" id="readiness-breakdown-card">
+        <h2>Why this score?</h2>
+        <div id="readiness-breakdown"><p class="hint">Loading…</p></div>
+      </div>
+    </div>
+
+    <h2 class="section-subhead">Operator Leaderboard</h2>
+    <div class="panel-card"><div id="readiness-leaderboard"><p class="hint">Loading…</p></div></div>
+  </section>
+
+  <!-- ============ 8. SHIFT HANDOFF ============ -->
+  <section id="section-handoff" class="page-section" hidden>
+    <div class="page-head">
+      <div class="page-head-row">
+        <div>
+          <h1>Shift Handoff</h1>
+          <p class="page-sub">The whole dashboard, turned into one note for the next operator: generated from this operator's most recent shift.</p>
+        </div>
+        <span class="handoff-status" id="handoff-status">—</span>
+      </div>
+    </div>
+
+    <div class="panel-card handoff-note">
+      <div class="handoff-note-head">
+        <div class="handoff-meta" id="handoff-meta"></div>
+        <button type="button" class="handoff-copy" id="handoff-copy" disabled>Copy note</button>
+      </div>
+      <div class="handoff-summary" id="handoff-summary"><p class="hint">Loading…</p></div>
+    </div>
+
+    <div id="handoff-body" hidden>
+      <div class="handoff-metrics" id="handoff-metrics"></div>
+
+      <div class="handoff-grid">
+        <div class="panel-card">
+          <h2>Flagged This Shift</h2>
+          <div id="handoff-events"></div>
+        </div>
+        <div class="panel-card">
+          <h2>Maintenance Recommendation</h2>
+          <div id="handoff-maintenance"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast-container"></div>
+
+<div id="chatbot-widget" class="chatbot-collapsed">
+  <button id="chatbot-toggle" type="button">CATMate Assistant</button>
+  <div id="chatbot-panel" hidden>
+    <div class="chatbot-header">
+      <span>CATMate Assistant</span>
+      <button id="chatbot-close" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="chatbot-messages" id="chatbot-messages"></div>
+    <div class="chatbot-suggestions" id="chatbot-suggestions"></div>
+    <form id="chatbot-form">
+      <input id="chatbot-input" type="text" placeholder="Ask about your shift…" autocomplete="off">
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>
+
+<footer class="footer">
+  CATMate — Operator View · data-driven demo, backend at <code>http://127.0.0.1:5000</code>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<script src="js/core.js?v=20260923f"></script>
+<script src="js/tasks.js?v=20260923f"></script>
+<script src="js/safety.js?v=20260923f"></script>
+<script src="js/training.js?v=20260923f"></script>
+<script src="js/behavior.js?v=20260923f"></script>
+<script src="js/tasktime.js?v=20260923f"></script>
+<script src="js/integrity.js?v=20260923f"></script>
+<script src="js/readiness.js?v=20260923f"></script>
+<script src="js/handoff.js?v=20260923f"></script>
+<script src="js/chatbot.js?v=20260923f"></script>
+<script src="js/main.js?v=20260923f"></script>
+</body>
+</html>
