@@ -27,11 +27,16 @@ def _incident_type(row: pd.Series) -> str:
 def _severity(row: pd.Series) -> str:
     seatbelt = row["seatbelt_status"] == "Unfastened"
     proximity_m = row["proximity_distance_m"]
-    if seatbelt and proximity_m < 2.0:
+    # Guard against implausible/negative sensor values the same way
+    # _incident_type does - a spoofed reading isn't a real proximity hazard,
+    # so it shouldn't be rated as if it were one.
+    proximity_violation = 0 <= proximity_m < 2.0
+    proximity_critical = 0 <= proximity_m < HIGH_SEVERITY_PROXIMITY_M
+    if seatbelt and proximity_violation:
         return "High"
-    if 0 <= proximity_m < HIGH_SEVERITY_PROXIMITY_M:
+    if proximity_critical:
         return "High"
-    if seatbelt or proximity_m < 2.0:
+    if seatbelt or proximity_violation:
         return "Medium"
     return "Low"
 
