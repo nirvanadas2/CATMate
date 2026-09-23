@@ -9,6 +9,7 @@ from flask_cors import CORS
 import incidents as incidents_module
 from anomaly_engine import (
     PROXIMITY_HAZARD_THRESHOLD_M,
+    _with_load_cycle_delta,
     compute_behavior_anomalies,
     compute_security_anomalies,
 )
@@ -140,6 +141,35 @@ def get_trust_score():
     ]
     leaderboard.sort(key=lambda r: r["current_score"], reverse=True)
     return jsonify(leaderboard)
+
+
+@app.route("/operator-history")
+def get_operator_history():
+    """Daily mean of one metric for one operator, across the full dataset -
+    powers the frontend's drift chart (no existing endpoint exposes raw
+    historical trends, only flagged-anomaly rows or daily rollup counts)."""
+    operator_id = request.args.get("operator_id")
+    metric = request.args.get("metric", "idling_time_min")
+    valid_metrics = {"idling_time_min", "proximity_distance_m", "load_cycles_delta"}
+
+    if not operator_id:
+        return jsonify({"error": "operator_id query param is required"}), 400
+    if metric not in valid_metrics:
+        return jsonify({"error": f"metric must be one of {sorted(valid_metrics)}"}), 400
+
+    df = _with_load_cycle_delta(DF)
+    op_rows = df[df["operator_id"] == operator_id].copy()
+    if op_rows.empty:
+        return jsonify({"operator_id": operator_id, "metric": metric, "daily": []})
+
+    op_rows["date"] = op_rows["timestamp"].dt.date
+    daily = op_rows.groupby("date")[metric].mean().round(2).sort_index()
+
+    return jsonify({
+        "operator_id": operator_id,
+        "metric": metric,
+        "daily": [{"date": d.isoformat(), "value": float(v)} for d, v in daily.items()],
+    })
 
 
 @app.route("/predict-task-time")
