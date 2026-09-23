@@ -14,12 +14,17 @@ Z_THRESHOLD = 2.0
 PROXIMITY_HAZARD_THRESHOLD_M = 2.0
 
 
-def _with_load_cycle_delta(df: pd.DataFrame) -> pd.DataFrame:
-    """load_cycles is a cumulative counter; the per-reading *increment* is the
-    behaviorally meaningful signal, so we diff it per operator."""
+def _with_delta(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    """Some fields (load_cycles, fuel_used_L, engine_hours) are cumulative
+    counters; the per-reading *increment* is the behaviorally meaningful
+    signal, so we diff them per operator. Adds an f"{column}_delta" column."""
     df = df.sort_values(["operator_id", "timestamp"]).copy()
-    df["load_cycles_delta"] = df.groupby("operator_id")["load_cycles"].diff().fillna(0)
+    df[f"{column}_delta"] = df.groupby("operator_id")[column].diff().fillna(0)
     return df
+
+
+def _with_load_cycle_delta(df: pd.DataFrame) -> pd.DataFrame:
+    return _with_delta(df, "load_cycles")
 
 
 def compute_behavior_anomalies(df: pd.DataFrame) -> list[dict]:
@@ -113,7 +118,13 @@ def compute_security_anomalies(df: pd.DataFrame) -> list[dict]:
     for _, row in df.iterrows():
         operator_id = row["operator_id"]
         ts = row["timestamp"].isoformat()
-        base = {"operator_id": operator_id, "machine_id": row["machine_id"], "timestamp": ts}
+        base = {
+            "operator_id": operator_id,
+            "machine_id": row["machine_id"],
+            "timestamp": ts,
+            "login_location": row["login_location"],
+            "login_device_id": row["login_device_id"],
+        }
         usual_device = usual.loc[operator_id, "login_device_id"]
         usual_location = usual.loc[operator_id, "login_location"]
 
@@ -158,3 +169,51 @@ def compute_security_anomalies(df: pd.DataFrame) -> list[dict]:
 
     anomalies.sort(key=lambda a: a["timestamp"], reverse=True)
     return anomalies
+
+
+def compute_integrity_summary(df: pd.DataFrame, operator_id: str, on_date) -> dict:
+    """Per-category PASS/FAIL check counts for one operator's readings on one
+    day - the same checks compute_security_anomalies already runs (device
+    identity, data signature, sensor plausibility) plus a firmware check,
+    rolled up as category totals instead of a flat event list, so the
+    Integrity panel always shows real, live work even when nothing is
+    currently flagged."""
+    op_rows = df[(df["operator_id"] == operator_id) & (df["timestamp"].dt.date == on_date)].copy()
+    if op_rows.empty:
+        return {"operator_id": operator_id, "date": on_date.isoformat(), "total_checks": 0, "total_flagged": 0, "categories": []}
+
+    total = len(op_rows)
+
+    valid_sig_rows = df[df["data_signature_valid"] & (df["operator_id"] == operator_id)]
+    usual_device = valid_sig_rows["login_device_id"].mode()
+    usual_location = valid_sig_rows["login_location"].mode()
+    usual_device = usual_device.iat[0] if not usual_device.empty else None
+    usual_location = usual_location.iat[0] if not usual_location.empty else None
+    device_pass = int(((op_rows["login_device_id"] == usual_device) & (op_rows["login_location"] == usual_location)).sum())
+
+    signature_pass = int(op_rows["data_signature_valid"].sum())
+
+    op_sorted = op_rows.sort_values("timestamp")
+    engine_hours_delta = op_sorted.groupby("machine_id")["engine_hours"].diff()
+    plausible = (op_sorted["proximity_distance_m"] >= 0) & (engine_hours_delta.isna() | (engine_hours_delta >= 0))
+    plausibility_pass = int(plausible.sum())
+
+    machine_expected_fw = df.groupby("machine_id")["firmware_version"].agg(lambda s: s.mode().iat[0])
+    expected_fw = op_rows["machine_id"].map(machine_expected_fw)
+    firmware_pass = int((op_rows["firmware_version"] == expected_fw).sum())
+
+    categories = [
+        {"key": "device_identity", "label": "Device Identity", "passed": device_pass, "total": total},
+        {"key": "data_signature", "label": "Data Signature", "passed": signature_pass, "total": total},
+        {"key": "sensor_plausibility", "label": "Sensor Plausibility", "passed": plausibility_pass, "total": total},
+        {"key": "firmware_version", "label": "Firmware Version", "passed": firmware_pass, "total": total},
+    ]
+    total_flagged = sum(c["total"] - c["passed"] for c in categories)
+
+    return {
+        "operator_id": operator_id,
+        "date": on_date.isoformat(),
+        "total_checks": total * len(categories),
+        "total_flagged": total_flagged,
+        "categories": categories,
+    }
